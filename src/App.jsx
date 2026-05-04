@@ -9,6 +9,7 @@ export default function App() {
   const [editid, seteditid] = useState(null);
   const [search, setsearch] = useState("");
   const [preview, setpreview] = useState(null);
+  const [error, seterror] = useState("");
 
   const BASE_URL = "https://drive-backend-fwgl.onrender.com";
 
@@ -30,18 +31,13 @@ export default function App() {
   const addtask = async (e) => {
     e.preventDefault();
 
-    // ✅ VALIDATION FIX (IMPORTANT)
     if (!name.trim()) {
-      alert("Name is required");
+      seterror("Name is required");
       return;
     }
 
-    if (!editid && !file) {
-      alert("File select kar bhai 📁");
-      return;
-    }
+    seterror("");
 
-    // UPDATE
     if (editid) {
       await fetch(`${BASE_URL}/api/v2/updatefile/${editid}`, {
         method: "PUT",
@@ -55,10 +51,8 @@ export default function App() {
       return;
     }
 
-    // CREATE
     const formdata = new FormData();
     formdata.append("name", name);
-
     if (file) formdata.append("file", file);
     if (parentid) formdata.append("parentid", parentid);
 
@@ -98,25 +92,14 @@ export default function App() {
     setparentid(last ? last._id : null);
   };
 
-  // IMAGE CHECK
   const isImage = (file) => /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
 
   const filteredData = data.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // DRAG DROP
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setfile(e.dataTransfer.files[0]);
-  };
-
   return (
-    <div
-      onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
-      className="min-h-screen bg-[#0b0a10] text-white flex flex-col"
-    >
+    <div className="min-h-screen bg-[#0b0a10] text-white flex flex-col">
       {/* BACKGROUND */}
       <div className="fixed inset-0 -z-10">
         <img
@@ -128,22 +111,33 @@ export default function App() {
 
       {/* HEADER */}
       <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl px-3 py-2 space-y-2">
-        <h1 className="text-purple-400 font-bold text-lg">Shiyan Drive</h1>
+        <h1 className="text-purple-400 font-bold text-lg cursor-pointer">
+          Shiyan Drive
+        </h1>
 
         <input
           value={search}
           onChange={(e) => setsearch(e.target.value)}
           placeholder="Search files or folders..."
-          className="w-full bg-white/10 px-3 py-2 rounded-lg outline-none"
+          className="w-full bg-white/10 px-3 py-2 rounded-lg outline-none cursor-text"
         />
 
         <form onSubmit={addtask} className="flex gap-2 flex-wrap">
-          <input
-            value={name}
-            onChange={(e) => setname(e.target.value)}
-            placeholder="File / Folder name..."
-            className="flex-1 min-w-[120px] bg-white/10 px-3 py-2 rounded-lg"
-          />
+          <div className="w-full">
+            <input
+              value={name}
+              onChange={(e) => {
+                setname(e.target.value);
+                if (e.target.value.trim()) seterror("");
+              }}
+              placeholder="File / Folder name..."
+              className={`w-full px-3 py-2 rounded-lg bg-white/10 outline-none cursor-text border ${
+                error ? "border-red-500" : "border-transparent"
+              }`}
+            />
+
+            {error && <p className="text-red-400 text-xs mt-1 ml-1">{error}</p>}
+          </div>
 
           <input
             type="file"
@@ -154,12 +148,12 @@ export default function App() {
 
           <label
             htmlFor="file"
-            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer"
+            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer hover:bg-white/20 transition"
           >
             📁
           </label>
 
-          <button className="bg-purple-600 px-4 py-2 rounded-lg">
+          <button className="bg-purple-600 px-4 py-2 rounded-lg cursor-pointer hover:scale-105 transition">
             {editid ? "Update" : "Upload"}
           </button>
         </form>
@@ -172,7 +166,7 @@ export default function App() {
             setparentid(null);
             setpath([]);
           }}
-          className="cursor-pointer text-white"
+          className="cursor-pointer text-white hover:text-purple-400"
         >
           Home /
         </span>
@@ -184,7 +178,7 @@ export default function App() {
               setparentid(p._id);
               setpath(path.slice(0, i + 1));
             }}
-            className="cursor-pointer text-gray-300"
+            className="cursor-pointer text-gray-300 hover:text-white"
           >
             {p.name} /
           </span>
@@ -196,31 +190,35 @@ export default function App() {
         {filteredData.map((item) => (
           <div
             key={item._id}
-            className="bg-white/5 border border-white/10 rounded-xl p-2 hover:scale-105 transition"
+            className="bg-white/5 border border-white/10 rounded-xl p-2 hover:scale-105 transition cursor-pointer"
           >
             <div
               onClick={() => openFolder(item)}
               onDoubleClick={() => item.file && setpreview(item.file)}
-              className="h-24 sm:h-32 bg-black/30 flex items-center justify-center rounded-lg overflow-hidden cursor-pointer"
+              className="h-24 sm:h-32 bg-black/30 flex items-center justify-center rounded-lg overflow-hidden"
             >
               {item.type === "folder" ? (
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/3767/3767084.png"
-                  className="w-14 sm:w-16"
+                  className="w-14 sm:w-16 cursor-pointer"
                 />
               ) : item.file && isImage(item.file) ? (
-                <img src={item.file} className="w-full h-full object-cover" />
+                <img
+                  src={item.file}
+                  className="w-full h-full object-cover cursor-pointer"
+                />
               ) : (
-                <span>📄</span>
+                <span className="cursor-pointer">📄</span>
               )}
             </div>
 
-            <p className="text-xs mt-2 truncate">{item.name}</p>
+            <p className="text-xs mt-2 truncate cursor-pointer">{item.name}</p>
 
+            {/* ACTIONS */}
             <div className="flex justify-between text-[10px] mt-2">
               <button
                 onClick={() => deletes(item._id)}
-                className="text-red-400"
+                className="text-red-400 cursor-pointer hover:scale-110"
               >
                 Delete
               </button>
@@ -230,7 +228,7 @@ export default function App() {
                   setname(item.name);
                   seteditid(item._id);
                 }}
-                className="text-yellow-400"
+                className="text-yellow-400 cursor-pointer hover:scale-110"
               >
                 Edit
               </button>
@@ -243,7 +241,7 @@ export default function App() {
       {parentid && (
         <button
           onClick={goBack}
-          className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-500 px-5 py-2 rounded-full shadow-lg"
+          className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-red-500 px-5 py-2 rounded-full shadow-lg cursor-pointer hover:scale-110 transition"
         >
           ← Back
         </button>
@@ -253,7 +251,7 @@ export default function App() {
       {preview && (
         <div
           onClick={() => setpreview(null)}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center"
+          className="fixed inset-0 bg-black/80 flex items-center justify-center cursor-pointer"
         >
           <img src={preview} className="max-w-[90%] max-h-[80%] rounded-xl" />
         </div>
@@ -262,7 +260,9 @@ export default function App() {
       {/* FOOTER */}
       <footer className="mt-auto py-4 text-center text-xs text-gray-400 border-t border-white/10">
         Made with ❤️ by{" "}
-        <span className="text-purple-400 font-semibold">Shiyan</span>
+        <span className="text-purple-400 font-semibold cursor-pointer">
+          Shiyan
+        </span>
       </footer>
     </div>
   );
