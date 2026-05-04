@@ -9,11 +9,9 @@ export default function App() {
   const [editid, seteditid] = useState(null);
   const [search, setsearch] = useState("");
   const [preview, setpreview] = useState(null);
-  const [shareLink, setShareLink] = useState(null);
 
   const BASE_URL = "https://drive-backend-fwgl.onrender.com";
 
-  // GET DATA
   const getdata = async () => {
     let url = `${BASE_URL}/api/v2/getfile`;
     if (parentid) url = `${BASE_URL}/api/v2/getfile/${parentid}`;
@@ -27,7 +25,6 @@ export default function App() {
     getdata();
   }, [parentid]);
 
-  // CREATE / UPDATE
   const addtask = async (e) => {
     e.preventDefault();
 
@@ -59,7 +56,6 @@ export default function App() {
     getdata();
   };
 
-  // DELETE
   const deletes = async (id) => {
     await fetch(`${BASE_URL}/api/v2/deletefile/${id}`, {
       method: "DELETE",
@@ -67,13 +63,6 @@ export default function App() {
     getdata();
   };
 
-  // EDIT
-  const editItem = (item) => {
-    setname(item.name);
-    seteditid(item._id);
-  };
-
-  // OPEN FOLDER
   const openFolder = (item) => {
     if (item.type === "folder") {
       setparentid(item._id);
@@ -81,7 +70,6 @@ export default function App() {
     }
   };
 
-  // BACK
   const goBack = () => {
     const newPath = [...path];
     newPath.pop();
@@ -91,54 +79,42 @@ export default function App() {
     setparentid(last ? last._id : null);
   };
 
-  // IMAGE CHECK
   const isImage = (file) => /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
 
-  // FILTER SEARCH
   const filteredData = data.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // DRAG DROP
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setfile(e.dataTransfer.files[0]);
-  };
-
   return (
-    <div
-      onDrop={handleDrop}
-      onDragOver={(e) => e.preventDefault()}
-      className="min-h-screen bg-[#0b0a10] text-white flex flex-col"
-    >
+    <div className="min-h-screen bg-[#0b0a10] text-white flex flex-col">
       {/* BACKGROUND */}
       <div className="fixed inset-0 -z-10">
         <img
           src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2070"
           className="w-full h-full object-cover opacity-20"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/50 to-black" />
+        <div className="absolute inset-0 bg-black/70" />
       </div>
 
-      {/* HEADER */}
-      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl p-3 flex flex-col md:flex-row gap-2 md:items-center">
-        <h1 className="text-purple-400 font-bold text-lg md:text-xl">
-          Shiyan Drive
-        </h1>
+      {/* HEADER (MOBILE SAFE) */}
+      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl px-3 py-2 flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+          <h1 className="text-purple-400 font-bold text-lg">Shiyan Drive</h1>
+        </div>
 
         <input
           value={search}
           onChange={(e) => setsearch(e.target.value)}
           placeholder="Search files..."
-          className="flex-1 bg-white/10 px-3 py-2 rounded-lg outline-none"
+          className="w-full bg-white/10 px-3 py-2 rounded-lg text-sm"
         />
 
-        <form onSubmit={addtask} className="flex gap-2 flex-wrap">
+        <form onSubmit={addtask} className="flex gap-2 items-center flex-wrap">
           <input
             value={name}
             onChange={(e) => setname(e.target.value)}
             placeholder="Name"
-            className="bg-white/10 px-3 py-2 rounded-lg"
+            className="flex-1 min-w-[120px] bg-white/10 px-3 py-2 rounded-lg text-sm"
           />
 
           <input
@@ -150,25 +126,25 @@ export default function App() {
 
           <label
             htmlFor="file"
-            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer"
+            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer text-sm"
           >
             📁
           </label>
 
-          <button className="bg-purple-600 px-4 py-2 rounded-lg">
+          <button className="bg-purple-600 px-4 py-2 rounded-lg text-sm">
             {editid ? "Update" : "Upload"}
           </button>
         </form>
       </header>
 
-      {/* BREADCRUMB */}
-      <div className="pt-24 px-4 flex flex-wrap gap-2 text-sm text-gray-300">
+      {/* BREADCRUMB (FIXED MOBILE SCROLL) */}
+      <div className="pt-28 px-3 flex gap-2 text-xs overflow-x-auto whitespace-nowrap">
         <span
           onClick={() => {
             setparentid(null);
             setpath([]);
           }}
-          className="cursor-pointer hover:text-white"
+          className="cursor-pointer text-white"
         >
           Home /
         </span>
@@ -180,58 +156,49 @@ export default function App() {
               setparentid(p._id);
               setpath(path.slice(0, i + 1));
             }}
-            className="cursor-pointer hover:text-white"
+            className="cursor-pointer text-gray-300"
           >
             {p.name} /
           </span>
         ))}
       </div>
 
-      {/* BACK BUTTON MOBILE FIX */}
-      {parentid && (
-        <div className="px-4 mt-2 md:hidden">
-          <button onClick={goBack} className="bg-red-500 px-3 py-1 rounded">
-            ← Back
-          </button>
-        </div>
-      )}
-
-      {/* GRID */}
-      <main className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* GRID (MOBILE FIXED CARDS) */}
+      <main className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pb-24">
         {filteredData.map((item) => (
           <div
             key={item._id}
-            className="bg-white/5 p-3 rounded-xl border border-white/10"
+            className="bg-white/5 rounded-xl border border-white/10 p-2"
           >
             <div
               onClick={() => openFolder(item)}
               onDoubleClick={() => item.file && setpreview(item.file)}
-              className="h-28 md:h-40 bg-black/30 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
+              className="h-24 sm:h-32 bg-black/30 rounded-lg flex items-center justify-center overflow-hidden"
             >
               {item.type === "folder" ? (
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/3767/3767084.png"
-                  className="w-16 md:w-20"
+                  className="w-14 sm:w-16"
                 />
               ) : item.file && isImage(item.file) ? (
                 <img src={item.file} className="w-full h-full object-cover" />
               ) : (
-                <span>📄</span>
+                <span className="text-xs">📄</span>
               )}
             </div>
 
-            <p className="mt-2 text-sm truncate">{item.name}</p>
+            <p className="text-xs mt-2 truncate">{item.name}</p>
 
-            <div className="flex justify-between text-xs mt-2">
+            <div className="flex justify-between text-[10px] mt-2">
               <button
                 onClick={() => deletes(item._id)}
                 className="text-red-400"
               >
-                Delete
+                Del
               </button>
 
               <button
-                onClick={() => editItem(item)}
+                onClick={() => seteditid(item._id)}
                 className="text-yellow-400"
               >
                 Edit
@@ -240,6 +207,18 @@ export default function App() {
           </div>
         ))}
       </main>
+
+      {/* 🔙 MOBILE FIXED BACK BUTTON (BOTTOM FLOAT) */}
+      {parentid && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 md:hidden">
+          <button
+            onClick={goBack}
+            className="bg-red-500 px-5 py-2 rounded-full shadow-lg"
+          >
+            ← Back
+          </button>
+        </div>
+      )}
 
       {/* PREVIEW */}
       {preview && (
@@ -252,7 +231,7 @@ export default function App() {
       )}
 
       {/* FOOTER */}
-      <footer className="mt-auto text-center py-4 text-gray-400 text-sm border-t border-white/10">
+      <footer className="text-center py-3 text-xs text-gray-400 border-t border-white/10 mt-auto">
         Made with ❤️ by <span className="text-purple-400">Shiyan</span>
       </footer>
     </div>
