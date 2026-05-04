@@ -27,11 +27,10 @@ export default function App() {
     getdata();
   }, [parentid]);
 
-  // CREATE + UPDATE
+  // CREATE / UPDATE
   const addtask = async (e) => {
     e.preventDefault();
 
-    // UPDATE MODE
     if (editid) {
       await fetch(`${BASE_URL}/api/v2/updatefile/${editid}`, {
         method: "PUT",
@@ -45,7 +44,6 @@ export default function App() {
       return;
     }
 
-    // CREATE MODE
     const formdata = new FormData();
     formdata.append("name", name);
     if (file) formdata.append("file", file);
@@ -83,7 +81,7 @@ export default function App() {
     }
   };
 
-  // BACK NAV
+  // BACK
   const goBack = () => {
     const newPath = [...path];
     newPath.pop();
@@ -96,30 +94,22 @@ export default function App() {
   // IMAGE CHECK
   const isImage = (file) => /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
 
-  // SEARCH (frontend)
+  // FILTER SEARCH
   const filteredData = data.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  // DRAG & DROP
+  // DRAG DROP
   const handleDrop = (e) => {
     e.preventDefault();
     setfile(e.dataTransfer.files[0]);
   };
 
-  const handleDragOver = (e) => e.preventDefault();
-
-  // SHARE LINK (frontend demo)
-  const generateShare = (item) => {
-    const link = `${window.location.origin}/share/${item._id}`;
-    setShareLink(link);
-  };
-
   return (
     <div
       onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      className="min-h-screen bg-[#0b0a10] text-white"
+      onDragOver={(e) => e.preventDefault()}
+      className="min-h-screen bg-[#0b0a10] text-white flex flex-col"
     >
       {/* BACKGROUND */}
       <div className="fixed inset-0 -z-10">
@@ -127,22 +117,20 @@ export default function App() {
           src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2070"
           className="w-full h-full object-cover opacity-20"
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/50 to-black"></div>
-
-        <h1 className="absolute text-[15vw] opacity-[0.04] top-1/3 left-1/2 -translate-x-1/2">
-          SHIYAN
-        </h1>
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-purple-900/50 to-black" />
       </div>
 
       {/* HEADER */}
-      <header className="fixed top-0 w-full z-50 bg-black/50 backdrop-blur-xl px-3 md:px-6 py-3 flex flex-col md:flex-row gap-2 md:items-center">
-        <h1 className="text-purple-400 font-bold text-lg">Shiyan Drive</h1>
+      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl p-3 flex flex-col md:flex-row gap-2 md:items-center">
+        <h1 className="text-purple-400 font-bold text-lg md:text-xl">
+          Shiyan Drive
+        </h1>
 
         <input
           value={search}
           onChange={(e) => setsearch(e.target.value)}
-          placeholder="Search..."
-          className="flex-1 bg-white/10 px-3 py-2 rounded-lg"
+          placeholder="Search files..."
+          className="flex-1 bg-white/10 px-3 py-2 rounded-lg outline-none"
         />
 
         <form onSubmit={addtask} className="flex gap-2 flex-wrap">
@@ -174,16 +162,16 @@ export default function App() {
       </header>
 
       {/* BREADCRUMB */}
-      <div className="pt-24 px-4 flex gap-2 text-sm flex-wrap">
-        <button
+      <div className="pt-24 px-4 flex flex-wrap gap-2 text-sm text-gray-300">
+        <span
           onClick={() => {
             setparentid(null);
             setpath([]);
           }}
-          className="text-white"
+          className="cursor-pointer hover:text-white"
         >
           Home /
-        </button>
+        </span>
 
         {path.map((p, i) => (
           <span
@@ -192,25 +180,33 @@ export default function App() {
               setparentid(p._id);
               setpath(path.slice(0, i + 1));
             }}
-            className="cursor-pointer"
+            className="cursor-pointer hover:text-white"
           >
             {p.name} /
           </span>
         ))}
       </div>
 
+      {/* BACK BUTTON MOBILE FIX */}
+      {parentid && (
+        <div className="px-4 mt-2 md:hidden">
+          <button onClick={goBack} className="bg-red-500 px-3 py-1 rounded">
+            ← Back
+          </button>
+        </div>
+      )}
+
       {/* GRID */}
-      <main className="p-3 md:p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <main className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         {filteredData.map((item) => (
           <div
             key={item._id}
             className="bg-white/5 p-3 rounded-xl border border-white/10"
           >
-            {/* FILE */}
             <div
               onClick={() => openFolder(item)}
               onDoubleClick={() => item.file && setpreview(item.file)}
-              className="h-28 md:h-40 bg-black/30 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"
+              className="h-28 md:h-40 bg-black/30 rounded-lg flex items-center justify-center overflow-hidden cursor-pointer"
             >
               {item.type === "folder" ? (
                 <img
@@ -226,7 +222,6 @@ export default function App() {
 
             <p className="mt-2 text-sm truncate">{item.name}</p>
 
-            {/* ACTIONS */}
             <div className="flex justify-between text-xs mt-2">
               <button
                 onClick={() => deletes(item._id)}
@@ -240,13 +235,6 @@ export default function App() {
                 className="text-yellow-400"
               >
                 Edit
-              </button>
-
-              <button
-                onClick={() => generateShare(item)}
-                className="text-blue-400"
-              >
-                Share
               </button>
             </div>
           </div>
@@ -263,17 +251,10 @@ export default function App() {
         </div>
       )}
 
-      {/* SHARE MODAL */}
-      {shareLink && (
-        <div
-          onClick={() => setShareLink(null)}
-          className="fixed inset-0 bg-black/80 flex items-center justify-center"
-        >
-          <div className="bg-white/10 p-4 rounded-xl">
-            <p className="text-sm break-all">{shareLink}</p>
-          </div>
-        </div>
-      )}
+      {/* FOOTER */}
+      <footer className="mt-auto text-center py-4 text-gray-400 text-sm border-t border-white/10">
+        Made with ❤️ by <span className="text-purple-400">Shiyan</span>
+      </footer>
     </div>
   );
 }
