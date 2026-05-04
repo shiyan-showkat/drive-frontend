@@ -12,6 +12,7 @@ export default function App() {
 
   const BASE_URL = "https://drive-backend-fwgl.onrender.com";
 
+  // FETCH DATA
   const getdata = async () => {
     let url = `${BASE_URL}/api/v2/getfile`;
     if (parentid) url = `${BASE_URL}/api/v2/getfile/${parentid}`;
@@ -25,6 +26,7 @@ export default function App() {
     getdata();
   }, [parentid]);
 
+  // CREATE / UPDATE
   const addtask = async (e) => {
     e.preventDefault();
 
@@ -56,6 +58,7 @@ export default function App() {
     getdata();
   };
 
+  // DELETE
   const deletes = async (id) => {
     await fetch(`${BASE_URL}/api/v2/deletefile/${id}`, {
       method: "DELETE",
@@ -63,6 +66,7 @@ export default function App() {
     getdata();
   };
 
+  // OPEN FOLDER
   const openFolder = (item) => {
     if (item.type === "folder") {
       setparentid(item._id);
@@ -70,6 +74,7 @@ export default function App() {
     }
   };
 
+  // BACK NAVIGATION
   const goBack = () => {
     const newPath = [...path];
     newPath.pop();
@@ -77,10 +82,6 @@ export default function App() {
 
     setpath(newPath);
     setparentid(last ? last._id : null);
-  };
-  const edits = (item) => {
-    setname(item.name);
-    seteditid(item._id);
   };
 
   const isImage = (file) => /\.(jpg|jpeg|png|gif|webp)$/i.test(file);
@@ -94,31 +95,29 @@ export default function App() {
       {/* BACKGROUND */}
       <div className="fixed inset-0 -z-10">
         <img
-          src="https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=2070"
+          src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d"
           className="w-full h-full object-cover opacity-20"
         />
         <div className="absolute inset-0 bg-black/70" />
       </div>
 
-      {/* HEADER (MOBILE SAFE) */}
-      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl px-3 py-2 flex flex-col gap-2">
-        <div className="flex justify-between items-center">
-          <h1 className="text-purple-400 font-bold text-lg">Shiyan Drive</h1>
-        </div>
+      {/* HEADER */}
+      <header className="fixed top-0 w-full z-50 bg-black/60 backdrop-blur-xl p-3 space-y-2">
+        <h1 className="text-purple-400 font-bold text-lg">Shiyan Drive</h1>
 
         <input
           value={search}
           onChange={(e) => setsearch(e.target.value)}
           placeholder="Search files..."
-          className="w-full bg-white/10 px-3 py-2 rounded-lg text-sm"
+          className="w-full bg-white/10 px-3 py-2 rounded-lg outline-none"
         />
 
-        <form onSubmit={addtask} className="flex gap-2 items-center flex-wrap">
+        <form onSubmit={addtask} className="flex gap-2 flex-wrap">
           <input
             value={name}
             onChange={(e) => setname(e.target.value)}
-            placeholder="Name"
-            className="flex-1 min-w-[120px] bg-white/10 px-3 py-2 rounded-lg text-sm"
+            placeholder="File name..."
+            className="flex-1 bg-white/10 px-3 py-2 rounded-lg"
           />
 
           <input
@@ -130,19 +129,19 @@ export default function App() {
 
           <label
             htmlFor="file"
-            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer text-sm"
+            className="bg-white/10 px-3 py-2 rounded-lg cursor-pointer"
           >
             📁
           </label>
 
-          <button className="bg-purple-600 px-4 py-2 rounded-lg text-sm">
+          <button className="bg-purple-600 px-4 py-2 rounded-lg">
             {editid ? "Update" : "Upload"}
           </button>
         </form>
       </header>
 
-      {/* BREADCRUMB (FIXED MOBILE SCROLL) */}
-      <div className="pt-28 px-3 flex gap-2 text-xs overflow-x-auto whitespace-nowrap">
+      {/* BREADCRUMB */}
+      <div className="pt-32 px-3 text-xs flex gap-2 overflow-x-auto whitespace-nowrap">
         <span
           onClick={() => {
             setparentid(null);
@@ -167,17 +166,17 @@ export default function App() {
         ))}
       </div>
 
-      {/* GRID (MOBILE FIXED CARDS) */}
+      {/* GRID */}
       <main className="p-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pb-24">
         {filteredData.map((item) => (
           <div
             key={item._id}
-            className="bg-white/5 rounded-xl border border-white/10 p-2"
+            className="bg-white/5 border border-white/10 rounded-xl p-2 hover:scale-105 transition cursor-pointer"
           >
             <div
               onClick={() => openFolder(item)}
               onDoubleClick={() => item.file && setpreview(item.file)}
-              className="h-24 sm:h-32 bg-black/30 rounded-lg flex items-center justify-center overflow-hidden"
+              className="h-24 sm:h-32 bg-black/30 flex items-center justify-center rounded-lg overflow-hidden"
             >
               {item.type === "folder" ? (
                 <img
@@ -187,7 +186,7 @@ export default function App() {
               ) : item.file && isImage(item.file) ? (
                 <img src={item.file} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-xs">📄</span>
+                <span>📄</span>
               )}
             </div>
 
@@ -198,10 +197,16 @@ export default function App() {
                 onClick={() => deletes(item._id)}
                 className="text-red-400"
               >
-                Del
+                Delete
               </button>
 
-              <button onClick={() => edits(item)} className="text-yellow-400">
+              <button
+                onClick={() => {
+                  setname(item.name);
+                  seteditid(item._id);
+                }}
+                className="text-yellow-400"
+              >
                 Edit
               </button>
             </div>
@@ -209,16 +214,14 @@ export default function App() {
         ))}
       </main>
 
-      {/* 🔙 MOBILE FIXED BACK BUTTON (BOTTOM FLOAT) */}
+      {/* BACK BUTTON */}
       {parentid && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 md:hidden">
-          <button
-            onClick={goBack}
-            className="bg-red-500 px-5 py-2 rounded-full shadow-lg"
-          >
-            ← Back
-          </button>
-        </div>
+        <button
+          onClick={goBack}
+          className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-red-500 px-6 py-2 rounded-full shadow-lg md:top-20 md:bottom-auto"
+        >
+          ← Back
+        </button>
       )}
 
       {/* PREVIEW */}
